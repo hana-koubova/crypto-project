@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block content %}
+
+<h1 class="text-center m-5"> Crypto database </h1>
+
+<section id="add-currency">
+    <div class="container-fluid">
+        <div class="row d-flex justify-content-center">
+        
+            <div class="col d-flex justify-content-center">
+                <h5 class="m-4">Add New Crypto</h5>
+                <form class="m-4" id="add-crypto-form" method="POST" action="{{ url_for('index') }}">
+                    {{ form.csrf_token }}
+                    {{ form.hidden_tag() }}
+                    {{ form.symbol(class_="input", placeholder="Symbol *") }}
+                    {{ form.amount(class_="input", placeholder="Amount *") }}
+                    <button id="submit-new-currency" class="border">Add</button>
+                </form>
+            </div>
+        </div>
+        <div class="row d-flex justify-content-center">
+            <p class="text-center fixed-height" id="warning-message">  </p>
+        </div>
+    </div>
+
+</section>
+
+<section id="existing-currencies">
+    <div class="container-fluid p-5">
+        <div class="row">
+            <div class="col">
+
+                <table id="currency-table" class="table table-hover">
+                    <thead>
+                      <tr class="first-row">
+                        <th>Symbol</th>
+                        <th>Name</th>
+                        <th>Amount</th>
+                        <th>Date last edited</th>
+                        <th>Operation</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                        {% for curr in currencies %}
+                            <tr id="{{ curr._id }}">
+                                <td>{{ curr.symbol }}</td>
+                                <td>{{ curr.name }}</td>
+                                <td>{{ curr.amount }}</td>
+                                <td>{{ curr.date_edited.strftime('%B %d %Y, %H:%M') }}</td>
+                                <td>
+                                    <button class="delete-btn" data-id="{{ curr._id }}" onclick="deleteCrypto('{{curr._id}}')">Delete</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // CSRF token
+    function getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+
+    // Update CSRF token
+    function updateCSRFToken(newToken) {
+        document.querySelector('meta[name="csrf-token"]').setAttribute('content', newToken);
+    }
+
+    // Adding new elements
+
+    var form = document.getElementById('add-crypto-form')
+    var messageDiv = document.getElementById('warning-message')
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Get CSRF token from the meta tag
+        const csrfToken = getCSRFToken();  
+        console.log('CSRF Token:', csrfToken);
+
+        messageDiv.innerText = 'Checking...';
+
+        const formData = new FormData(form);
+
+        fetch('/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+        })
+        .then(response => response.json())
+
+        .then(data => {
+            console.log('Response from server:', data);
+
+            if (data.status == 'error') {
+                messageDiv.innerText = data.message;
+                messageDiv.style.color = 'red';
+            } else {
+                messageDiv.innerText = 'Added successfully!';
+                messageDiv.style.color = 'green';
+            
+                // Clear input fields
+                document.querySelectorAll('#add-crypto-form input').forEach(input => input.value = '');
+
+                // Append new currency to the table
+                const tableBody = document.querySelector('#currency-table tbody');
+                let newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>${data.symbol}</td>
+                    <td>${data.name}</td>
+                    <td>${data.amount}</td>
+                    <td>${data.date_edited}</td>
+                    <td>
+                        <button class="delete-btn" data-id="${data.el_id}" onclick="deleteCrypto('${data.el_id}')">Delete</button>
+                    </td>
+                `;
+                newRow.setAttribute('id', data.el_id)
+                tableBody.prepend(newRow);
+
+                //if (data.new_csrf_token) {
+                //    updateCSRFToken(data.new_csrf_token)
+                //}
+            
+            }
+
+        })
+        .catch(error => {
+            console.log('Error: ', error);
+            messageDiv.innerText = 'An error occurred!';
+            messageDiv.style.color = 'red';
+        });
+    });
+
+    // Deleting elements
+
+    function deleteCrypto(cryptoId) {
+        // Get CSRF token from the meta tag
+         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        // Send DELETE request to backend
+        fetch(`/delete_crypto/${cryptoId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Response from server:', data);
+            if (data.status === 'success') {
+                const rowToDelete = document.getElementById(cryptoId);
+                if (rowToDelete) {
+                    rowToDelete.remove();
+                }
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occured while deleting the record.');
+        });
+    }
+    
+</script>
+
+
+{% endblock %}

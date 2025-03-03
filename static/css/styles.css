@@ -1,0 +1,27 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Open Sans', 'Roboto', 'Pt sans', serif;
+}
+
+.fixed-height {
+    height: 20px;
+}
+
+input {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid lightgray;
+}
+
+button {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid lightgray;
+}
+
+#submit-new-currency {
+    width: 60px;
+}
+
