@@ -18,7 +18,7 @@
                     {{ form.csrf_token }}
                     {{ form.hidden_tag() }}
                     {{ form.symbol(class_="input", placeholder="Symbol *") }}
-                    {{ form.amount(class_="input", placeholder="Amount *") }}
+                    {{ form.amount(class_="input", placeholder="Amount *", id="amount-input") }}
                     <button id="submit-new-currency" class="border">Add</button>
                 </form>
             </div>
@@ -81,13 +81,21 @@
 
     var form = document.getElementById('add-crypto-form')
     var messageDiv = document.getElementById('warning-message')
+    
 
     form.addEventListener('submit', function(event) {
         event.preventDefault();
 
         // Get CSRF token from the meta tag
         const csrfToken = getCSRFToken();  
-        console.log('CSRF Token:', csrfToken);
+        //console.log('CSRF Token:', csrfToken);
+
+        var amountInp = document.getElementById('amount-input').value
+        if (amountInp[0] == '0' || amountInp[0] == '-' || amountInp[0] == '.') {
+            messageDiv.innerText = 'Enter valid amount';
+            messageDiv.style.color = 'red';
+            return;
+        }
 
         messageDiv.innerText = 'Checking...';
 
