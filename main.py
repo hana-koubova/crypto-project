@@ -25,7 +25,7 @@ from forms import AddCrypto
 ## App Initiation
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'hellothisismysecretcrazykey9845947593884593@' #os.environ.get('FLASK_SECRET_KEY')
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
 
 bootstrap = Bootstrap5(app)
 
